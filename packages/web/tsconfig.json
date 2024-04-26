@@ -1,0 +1,14 @@
+{
+  "extends": "@local/typescript/tsconfig.json",
+  "include": [
+    "src"
+  ],
+  "compilerOptions": {
+		"jsxImportSource": "preact",
+    "paths": {
+      "~/*": [
+        "./src/*"
+      ]
+    },
+  }
+}
