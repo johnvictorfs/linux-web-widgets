@@ -25,8 +25,6 @@ export const Layout = (props: { title: string; path: string }) => {
 
 const app = new Hono();
 
-const widgets = ["dock.tsx", "thing.tsx"];
-
 const buildWidgets = async () => {
   const buildFolder = path.resolve(`./src/dist`);
 
@@ -34,11 +32,16 @@ const buildWidgets = async () => {
     fs.rmdirSync(buildFolder, { recursive: true });
   }
 
-  for (const widget of widgets) {
-    // JANK: Import widdgets for hot reloading
-    await import(path.resolve(`./src/widgets/${widget}`));
+  const widgetFolders = fs.readdirSync(path.resolve(`./src/widgets`));
 
-    const html = Layout({ title: "Dock", path: `./${widget}` }).toString();
+  for (const widgetFolder of widgetFolders) {
+    // JANK: Import widdgets for hot reloading
+    await import(path.resolve(`./src/widgets/${widgetFolder}/index.tsx`));
+
+    const html = Layout({
+      title: "Dock",
+      path: `./${widgetFolder}`,
+    }).toString();
 
     fs.mkdirSync(buildFolder, { recursive: true });
 
@@ -47,9 +50,12 @@ const buildWidgets = async () => {
       html.toString()
     );
 
-    fs.copyFileSync(
-      path.resolve(`./src/widgets/${widget}`),
-      path.resolve(`${buildFolder}/${widget}`)
+    fs.cpSync(
+      path.resolve(`./src/widgets/${widgetFolder}`),
+      path.resolve(`${buildFolder}/${widgetFolder}`),
+      {
+        recursive: true,
+      }
     );
 
     await viteBuild({
@@ -61,26 +67,26 @@ const buildWidgets = async () => {
       plugins: [preact()],
       resolve: {
         alias: {
-          "~": "../",
+          "~": "../../",
         },
       },
     });
 
     fs.renameSync(
       path.resolve(`${buildFolder}/dist/index.html`),
-      path.resolve(`${buildFolder}/dist/${widget.replace(".tsx", ".html")}`)
+      path.resolve(`${buildFolder}/dist/${widgetFolder.split(".")[0]}.html`)
     );
+
+    fs.rmdirSync(path.resolve(`${buildFolder}/${widgetFolder}`), {
+      recursive: true,
+    });
+
+    fs.rmSync(path.resolve(`${buildFolder}/index.html`));
   }
 };
 
 const port = parseInt(process.env.PORT!) || 3000;
 await buildWidgets();
-
-widgets.forEach((widget) => {
-  const widgetsPath = `./src/build/${widget}/dist`;
-  console.log(`serving ${widgetsPath}`);
-  // app.use(`/widget/${widget}/*`, serveStatic({ root: "./" }));
-});
 
 app.get(
   `/*`,

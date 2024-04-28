@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { z } from "zod";
 import { sendMessage, widgetBuilder } from "~/lib/widget";
 
 import "~/styles.css";
+import { WindowNode } from "./node";
 
 const RectSchema = z
   .object({
@@ -22,7 +23,7 @@ const WindowPropertiesSchema = z
   .optional()
   .nullable();
 
-type I3Node = {
+export type I3Node = {
   id: number;
   rect?: {
     x: number;
@@ -66,60 +67,6 @@ const I3wmStructureSchema = z.object({
   layout: z.string(),
   nodes: z.array(NodeSchema),
 });
-
-const hasFocusedNode = (node: I3Node): boolean => {
-  if (node.focused) {
-    return true;
-  }
-
-  if (node.nodes) {
-    for (const innerNode of node.nodes) {
-      if (hasFocusedNode(innerNode)) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-};
-
-const WindowNode = (props: { node: I3Node }) => {
-  if (props.node.name?.includes("dock")) {
-    return null;
-  }
-
-  const isFocusedOrHasFocusedChildren = useMemo(() => {
-    return hasFocusedNode(props.node);
-  }, [props.node.focused, props.node.nodes]);
-
-  if (props.node.type === "workspace" && props.node.num) {
-    return (
-      <div
-        className={`flex items-center justify-center
-      ${isFocusedOrHasFocusedChildren ? "bg-slate-400" : "bg-slate-700"}
-      rounded-lg w-12 h-8 text-gray-100`}
-      >
-        <span className="text-sm font-bold">{props.node.num}</span>
-      </div>
-    );
-  }
-
-  if (props.node.type === "con" && props.node.window_properties) {
-    return (
-      <div className="p-2 m-2 rounded-md bg-slate-500 text-white">
-        {props.node.window_properties?.instance ?? props.node.name}
-      </div>
-    );
-  }
-
-  return (
-    <>
-      {props.node.nodes?.map((node) => (
-        <WindowNode key={node.id} node={node} />
-      )) ?? null}
-    </>
-  );
-};
 
 const Dock = (props: { display: string }) => {
   const [nodes, setNodes] = useState<z.infer<
