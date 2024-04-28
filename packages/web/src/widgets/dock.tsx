@@ -4,26 +4,6 @@ import { sendMessage, widgetBuilder } from "~/lib/widget";
 
 import "~/styles.css";
 
-const workspaceEventPayloadSchema = z.object({
-  id: z.number(),
-  num: z.number(),
-  name: z.string(),
-  visible: z.boolean(),
-  focused: z.boolean(),
-  urgent: z.boolean(),
-  rect: z.object({
-    x: z.number(),
-    y: z.number(),
-    width: z.number(),
-    height: z.number(),
-  }),
-  output: z.string(),
-});
-
-const workspacesSchema = z.array(workspaceEventPayloadSchema);
-
-type Workspaces = z.infer<typeof workspacesSchema>;
-
 const RectSchema = z
   .object({
     x: z.number(),
@@ -117,7 +97,7 @@ const WindowNode = (props: { node: I3Node }) => {
       <div
         className={`flex items-center justify-center
       ${isFocusedOrHasFocusedChildren ? "bg-slate-400" : "bg-slate-700"}
-      rounded-full w-8 h-8 text-gray-100`}
+      rounded-lg w-12 h-8 text-gray-100`}
       >
         <span className="text-sm font-bold">{props.node.num}</span>
       </div>
@@ -141,7 +121,7 @@ const WindowNode = (props: { node: I3Node }) => {
   );
 };
 
-const Dock = () => {
+const Dock = (props: { display: string }) => {
   const [nodes, setNodes] = useState<z.infer<
     typeof I3wmStructureSchema
   > | null>(null);
@@ -152,9 +132,8 @@ const Dock = () => {
       command: "i3-msg",
       args: ["-t", "get_tree"],
       callback(data) {
-        const parsed = JSON.parse(data);
-        const validated = I3wmStructureSchema.parse(parsed);
-        setNodes(validated);
+        const parsed: z.infer<typeof I3wmStructureSchema> = JSON.parse(data);
+        setNodes(parsed);
       },
     });
 
@@ -168,10 +147,8 @@ const Dock = () => {
       ],
       listen: true,
       callback(data) {
-        const parsed = JSON.parse(data);
-        console.log("update", parsed);
-        const validated = I3wmStructureSchema.parse(parsed);
-        setNodes(validated);
+        const parsed: z.infer<typeof I3wmStructureSchema> = JSON.parse(data);
+        setNodes(parsed);
       },
     });
 
@@ -181,7 +158,7 @@ const Dock = () => {
   return (
     <div className="p-4 flex flex-row gap-2 items-center w-full h-full">
       {nodes?.nodes?.map((node) => {
-        if (node.type === "output" && node.name !== "__i3") {
+        if (node.type === "output" && node.name === props.display) {
           return (
             <div key={node.id} className="flex flex-row gap-2">
               {node.nodes?.map((workspace) => (
@@ -197,7 +174,7 @@ const Dock = () => {
   );
 };
 
-widgetBuilder(Dock)
+widgetBuilder(() => <Dock display="HDMI-0" />)
   .position(20, 20)
   .width(1880)
   .height(60)

@@ -120,14 +120,14 @@ export const sendMessage = <T extends keyof MessagePayloads>(
 
         if (messagePayload.message_id === message_id) {
           data.callback!(messagePayload.output);
-
-          cleanUp = () => {
-            // TODO: Send a message to the rust listener to drop the listener
-            console.log("dropping listener");
-            window.removeEventListener("message", listener);
-          };
         }
       }
+    };
+
+    cleanUp = () => {
+      console.log("dropping listener");
+      window.removeEventListener("message", listener);
+      window.ipc.postMessage(`kill-listener:${message_id}`);
     };
 
     window.addEventListener("message", listener);
