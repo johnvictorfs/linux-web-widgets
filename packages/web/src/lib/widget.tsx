@@ -8,11 +8,17 @@ class Widget {
   private _windowType: WindowType = "dock";
   private _display?: string;
   private _position?: { x: number; y: number };
+  private _overrideRedirect: boolean = false;
 
   private render: () => VNode;
 
   constructor(render: () => VNode) {
     this.render = render;
+  }
+
+  overrideRedirect(value: boolean) {
+    this._overrideRedirect = value;
+    return this;
   }
 
   position(x: number, y: number) {
@@ -45,6 +51,10 @@ class Widget {
   }
 
   build() {
+    if (typeof document === "undefined") {
+      return;
+    }
+
     render(<this.render />, document.getElementById("root")!);
 
     sendMessage("setup-window", {
@@ -54,6 +64,7 @@ class Widget {
       display: this._display,
       x: this._position?.x,
       y: this._position?.y,
+      override_redirect: this._overrideRedirect,
     });
   }
 }
@@ -78,6 +89,14 @@ type MessagePayloads = {
     display?: string;
     x?: number;
     y?: number;
+    override_redirect: boolean;
+  };
+  command: {
+    command: string;
+    args: string[];
+    /** @default false */
+    listen?: boolean;
+    callback?: (data: string) => void;
   };
 };
 
@@ -85,5 +104,40 @@ export const sendMessage = <T extends keyof MessagePayloads>(
   message: T,
   data: MessagePayloads[T]
 ) => {
-  window.ipc.postMessage(`${message}:${JSON.stringify(data)}`);
+  let cleanUp: () => void = () => {};
+
+  const message_id = crypto.randomUUID();
+
+  window.ipc.postMessage(
+    `${message}:${JSON.stringify({ ...data, message_id })}`
+  );
+
+  if ("callback" in data && data.callback) {
+    const listener = (event: MessageEvent) => {
+      const { data: message } = event;
+      if (typeof message === "string") {
+        const messagePayload = JSON.parse(message);
+
+        if (messagePayload.message_id === message_id) {
+          data.callback!(messagePayload.output);
+
+          cleanUp = () => {
+            // TODO: Send a message to the rust listener to drop the listener
+            console.log("dropping listener");
+            window.removeEventListener("message", listener);
+          };
+        }
+      }
+    };
+
+    window.addEventListener("message", listener);
+  }
+
+  if ("listen" in data && !data.listen) {
+    cleanUp();
+  }
+
+  return {
+    cleanUp,
+  };
 };

@@ -35,6 +35,9 @@ const buildWidgets = async () => {
   }
 
   for (const widget of widgets) {
+    // JANK: Import widdgets for hot reloading
+    await import(path.resolve(`./src/widgets/${widget}`));
+
     const html = Layout({ title: "Dock", path: `./${widget}` }).toString();
 
     fs.mkdirSync(buildFolder, { recursive: true });
