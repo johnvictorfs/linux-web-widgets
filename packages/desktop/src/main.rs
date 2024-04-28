@@ -308,14 +308,6 @@ fn create_new_window(
         .build(event_loop)
         .unwrap();
 
-    #[cfg(any(
-        target_os = "windows",
-        target_os = "macos",
-        target_os = "ios",
-        target_os = "android"
-    ))]
-    let builder = WebViewBuilder::new(&window);
-
     #[cfg(not(any(
         target_os = "windows",
         target_os = "macos",
