@@ -62,8 +62,6 @@ fn exec_listener(
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take();
 
-    println!("Listening to command from exec_listener: {}", cmd);
-
     let cloned_id = listener_id.to_string();
 
     thread::spawn(move || {
@@ -72,7 +70,6 @@ fn exec_listener(
             let line = line.unwrap();
 
             if !LISTENERS.lock().unwrap().contains_key(&cloned_id) {
-                println!("Dropping listener for command: {}", &cloned_id);
                 break;
             }
 
@@ -154,8 +151,6 @@ fn main() -> wry::Result<()> {
 
                 if command.listen {
                     // keep listening to command stdout
-                    println!("Listening to command: {}", command.command);
-
                     // TODO: also add window id to clean listeners when window refreshes
                     LISTENERS.lock().unwrap().insert(message_id.clone(), true);
                     let another_message_id = message_id.clone();
@@ -291,13 +286,11 @@ fn create_new_window(
         match body.as_str() {
             _ if body.starts_with("setup-window") => {
                 let json_data = body.replace("setup-window:", "");
-                println!("Received setup-window event: {}", json_data);
                 let window_properties: WindowProperties = serde_json::from_str(&json_data).unwrap();
                 let _ = proxy.send_event(UserEvent::SetupWindow(window_id, window_properties));
             }
             _ if body.starts_with("command") => {
                 let json_data = body.replace("command:", "");
-                println!("Received command event: {}", json_data);
                 let command_options: CommandExecution = serde_json::from_str(&json_data).unwrap();
                 let _ = proxy.send_event(UserEvent::Command(window_id, command_options));
             }

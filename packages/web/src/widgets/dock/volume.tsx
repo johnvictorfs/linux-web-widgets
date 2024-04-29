@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "preact/hooks";
 import { useListenedValue } from "~/lib/hooks";
 import { sendMessage } from "~/lib/widget";
 import { VolumeFullIcon } from "./icons/volume-full";
@@ -6,8 +5,6 @@ import { VolumeLowIcon } from "./icons/volume-low";
 import { VolumeMutedIcon } from "./icons/volume-muted";
 
 export const Volume = () => {
-  const ref = useRef<HTMLDivElement>(null);
-
   const { value: volume, setValue: setVolume } = useListenedValue<number>({
     command: "pamixer",
     args: ["--get-volume"],
@@ -30,42 +27,28 @@ export const Volume = () => {
     type: "polling",
   });
 
-  useEffect(() => {
-    const onWheel = (event: WheelEvent) => {
-      if (!ref.current) {
-        return;
-      }
-
-      if (event.deltaY < 0) {
-        sendMessage("command", {
-          command: "pamixer",
-          args: ["--increase", "5"],
-        });
-        setVolume((volume) => (volume + 5 > 100 ? 100 : volume + 5));
-      } else {
-        sendMessage("command", {
-          command: "pamixer",
-          args: ["--decrease", "5"],
-        });
-        setVolume((volume) => (volume - 5 < 0 ? 0 : volume - 5));
-      }
-    };
-
-    window.addEventListener("wheel", onWheel);
-
-    return () => {
-      window.removeEventListener("wheel", onWheel);
-    };
-  }, []);
-
   const noVolume = isMuted || volume === 0;
 
   return (
     <div
-      ref={ref}
-      className={`flex flex-row gap-1 items-center cursor-pointer ${
+      className={`flex flex-row gap-2 items-center cursor-pointer ${
         noVolume ? "text-red-400" : ""
       }`}
+      onWheel={(event) => {
+        if (event.deltaY < 0) {
+          sendMessage("command", {
+            command: "pamixer",
+            args: ["--increase", "5"],
+          });
+          setVolume((volume) => (volume + 5 > 100 ? 100 : volume + 5));
+        } else {
+          sendMessage("command", {
+            command: "pamixer",
+            args: ["--decrease", "5"],
+          });
+          setVolume((volume) => (volume - 5 < 0 ? 0 : volume - 5));
+        }
+      }}
       onClick={() => {
         setMuted(!isMuted);
         sendMessage("command", {
@@ -75,11 +58,11 @@ export const Volume = () => {
       }}
     >
       {noVolume ? (
-        <VolumeMutedIcon />
+        <VolumeMutedIcon className="w-4 h-4" />
       ) : volume > 60 ? (
-        <VolumeFullIcon />
+        <VolumeFullIcon className="w-4 h-4" />
       ) : (
-        <VolumeLowIcon />
+        <VolumeLowIcon className="w-4 h-4" />
       )}
       {volume}%
     </div>

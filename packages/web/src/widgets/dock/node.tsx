@@ -44,7 +44,7 @@ export const WindowNode = (props: { node: I3Node }) => {
         className={`flex items-center justify-center transition-all
       ${
         isFocusedOrHasFocusedChildren
-          ? "bg-slate-600 text-secondary-foreground/70"
+          ? "bg-slate-600 text-secondary-foreground/60"
           : "bg-secondary text-secondary-foreground"
       }
       rounded-lg w-12 h-8 cursor-pointer`}
