@@ -1000,6 +1000,7 @@ dependencies = [
  "clippy",
  "gdk",
  "gtk",
+ "once_cell",
  "serde",
  "serde_json",
  "tao",

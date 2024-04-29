@@ -4,11 +4,12 @@
 // SPDX-License-Identifier: MIT
 
 use std::{
-    collections::HashMap, io::{BufRead, BufReader}, process::{Command, Stdio}, sync::Arc, thread
+    collections::HashMap, io::{BufRead, BufReader}, process::{Command, Stdio}, sync::Mutex, thread
 };
 
 use gtk::prelude::{GtkWindowExt, WidgetExt};
 
+use once_cell::sync::Lazy;
 use tao::{
     event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy, EventLoopWindowTarget}, platform::unix::WindowExtUnix, window::{Window, WindowBuilder, WindowId}
 };
@@ -26,6 +27,8 @@ const WIDGETS: [(&str, &str); 1] = [
     // ("Thing", "http://localhost:3000/thing.html"),
 ];
 
+static LISTENERS: Lazy<Mutex<HashMap<String, bool>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+
 fn exec(cmd: &str, args: &[&str]) -> String {
     let output = Command::new(cmd)
         .args(args)
@@ -39,8 +42,7 @@ fn exec_listener(
     cmd: &str,
     args: &[&str],
     callback: impl Fn(String) + Send + 'static,
-    listener_id: &str,
-    listeners: Arc<HashMap<String, bool>>,
+    listener_id: &str
 ) {
     let mut child = Command::new(cmd)
         .args(args)
@@ -53,14 +55,15 @@ fn exec_listener(
     println!("Listening to command from exec_listener: {}", cmd);
 
     let cloned_id = listener_id.to_string();
-    let cloned_listeners = listeners.clone();
 
     thread::spawn(move || {
         let reader = BufReader::new(stdout);
         for line in reader.lines() {
             let line = line.unwrap();
 
-            if cloned_listeners.contains_key(&cloned_id) {
+            println!("current listeners for command: {:?}", LISTENERS.lock().unwrap());
+
+            if !LISTENERS.lock().unwrap().contains_key(&cloned_id) {
                 println!("Dropping listener for command: {}", &cloned_id);
                 break;
             }
@@ -87,9 +90,6 @@ fn main() -> wry::Result<()> {
     let proxy = event_loop.create_proxy();
     let mut webviews = HashMap::new();
 
-    let mut listeners: HashMap<String, bool> = HashMap::new();
-    let listeners_shared = Arc::new(listeners.clone());
-
     for (title, url) in WIDGETS {
         let proxy_clone = proxy.clone();
         let widget_window =
@@ -113,7 +113,7 @@ fn main() -> wry::Result<()> {
                 }
             }
             Event::UserEvent(UserEvent::KillListener(message_id)) => {
-                listeners.remove(&message_id);
+                LISTENERS.lock().unwrap().remove(&message_id);
             }
             Event::UserEvent(UserEvent::SendWindowMessage(id, json_output)) => {
                 let webview = &webviews.get(&id).unwrap().1;
@@ -135,11 +135,8 @@ fn main() -> wry::Result<()> {
 
                     println!("Listening to command: {}", command.command);
 
-                    listeners.insert(message_id.clone(), true);
-
+                    LISTENERS.lock().unwrap().insert(message_id.clone(), true);
                     let another_message_id = message_id.clone();
-
-                    let listeners_clone = listeners_shared.clone();
 
                     exec_listener(
                         command.command.as_str(),
@@ -155,8 +152,7 @@ fn main() -> wry::Result<()> {
                             let _ = proxy_clone
                                 .send_event(UserEvent::SendWindowMessage(id, json_output));
                         },
-                        &another_message_id,
-                        listeners_clone
+                        &another_message_id
                     );
 
                     return;
