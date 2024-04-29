@@ -46,7 +46,9 @@ export const WindowNode = (props: { node: I3Node }) => {
       rounded-lg w-12 h-8 text-gray-100 cursor-pointer`}
         onClick={() => moveToWorkspace(props.node.name)}
       >
-        <span className="text-sm font-bold">{props.node.num}</span>
+        <span className="text-sm text-center">
+          {props.node.name ?? props.node.num}
+        </span>
       </div>
     );
   }

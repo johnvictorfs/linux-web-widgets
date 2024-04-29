@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  font-family: JetBrains Mono, Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-family: Fantasque Sans Mono, 'Font Awesome 5 Free Solid', FiraCode Nerd Font Mono, Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 16px;
   line-height: 24px;
   font-weight: 400;

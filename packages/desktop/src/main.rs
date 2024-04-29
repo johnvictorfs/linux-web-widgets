@@ -61,8 +61,6 @@ fn exec_listener(
         for line in reader.lines() {
             let line = line.unwrap();
 
-            println!("current listeners for command: {:?}", LISTENERS.lock().unwrap());
-
             if !LISTENERS.lock().unwrap().contains_key(&cloned_id) {
                 println!("Dropping listener for command: {}", &cloned_id);
                 break;
@@ -135,6 +133,7 @@ fn main() -> wry::Result<()> {
 
                     println!("Listening to command: {}", command.command);
 
+                    // TODO: also add window id to clean listeners when window refreshes
                     LISTENERS.lock().unwrap().insert(message_id.clone(), true);
                     let another_message_id = message_id.clone();
 
