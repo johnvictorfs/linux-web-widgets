@@ -121,9 +121,9 @@ export const sendMessage = <T extends keyof MessagePayloads>(
         if (messagePayload.message_id === message_id) {
           data.callback!(messagePayload.output);
 
-          // if ("listen" in data && !data.listen) {
-          //   cleanUp();
-          // }
+          if ("listen" in data && !data.listen) {
+            cleanUp();
+          }
         }
       }
     };

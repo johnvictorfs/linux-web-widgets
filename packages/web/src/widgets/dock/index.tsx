@@ -8,7 +8,7 @@ import { Workspaces } from "./workspaces";
 
 const Dock = (props: { display: string }) => {
   return (
-    <div className="p-4 flex gap-2 items-center w-full h-full justify-between">
+    <div className="flex gap-2 px-2 items-center w-full h-[100vh] justify-between">
       <div className="flex grow-1 w-full gap-2 items-center">
         <Workspaces display={props.display} />
 

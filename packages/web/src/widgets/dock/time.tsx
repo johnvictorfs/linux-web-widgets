@@ -27,9 +27,14 @@ export const Time = () => {
   });
 
   return (
-    <div className="flex flex-row gap-2 items-center justify-center">
-      <ClockIcon className="h-4 w-4 mb-1" /> {timeStr} |{" "}
-      <CalendarIcon className="h-4 w-4 mb-1" /> {dateStr}
+    <div className="flex gap-2 items-center justify-center">
+      <div className="bg-slate-700 rounded-lg flex gap-2 items-center justify-center py-1 px-2">
+        <ClockIcon className="h-4 w-4" /> {timeStr}
+      </div>
+
+      <div className="bg-slate-700 rounded-lg flex gap-2 items-center justify-center py-1 px-2">
+        <CalendarIcon className="h-4 w-4" /> {dateStr}
+      </div>
     </div>
   );
 };

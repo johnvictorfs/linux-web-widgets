@@ -56,5 +56,6 @@ export function useListenedValue<T = string>({
 
   return {
     value,
+    setValue,
   };
 }

@@ -1,4 +1,5 @@
 import { useMemo } from "preact/hooks";
+import { sendMessage } from "~/lib/widget";
 import type { I3Node } from "./workspaces";
 
 const hasFocusedNode = (node: I3Node): boolean => {
@@ -26,12 +27,24 @@ export const WindowNode = (props: { node: I3Node }) => {
     return hasFocusedNode(props.node);
   }, [props.node.focused, props.node.nodes]);
 
+  const moveToWorkspace = (workspace: string | null) => {
+    if (!workspace) {
+      return;
+    }
+
+    sendMessage("command", {
+      command: "i3-msg",
+      args: [`workspace ${workspace}`],
+    });
+  };
+
   if (props.node.type === "workspace" && props.node.num) {
     return (
       <div
         className={`flex items-center justify-center
-      ${isFocusedOrHasFocusedChildren ? "bg-slate-400" : "bg-slate-700"}
-      rounded-lg w-12 h-8 text-gray-100`}
+      ${isFocusedOrHasFocusedChildren ? "bg-slate-400" : "bg-slate-800"}
+      rounded-lg w-12 h-8 text-gray-100 cursor-pointer`}
+        onClick={() => moveToWorkspace(props.node.name)}
       >
         <span className="text-sm font-bold">{props.node.num}</span>
       </div>

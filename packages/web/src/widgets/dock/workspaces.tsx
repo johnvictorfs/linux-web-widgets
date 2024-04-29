@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+import { useEffect } from "preact/hooks";
 import { useListenedValue } from "~/lib/hooks";
+import { sendMessage } from "~/lib/widget";
 import "~/styles.css";
 import { WindowNode } from "./node";
 
@@ -68,11 +70,7 @@ const I3wmStructureSchema = z.object({
 });
 
 export const Workspaces = (props: { display: string }) => {
-  // const [nodes, setNodes] = useState<z.infer<
-  //   typeof I3wmStructureSchema
-  // > | null>(null);
-
-  const { value: nodes } = useListenedValue<z.infer<
+  const { value: nodes, setValue: setNodes } = useListenedValue<z.infer<
     typeof I3wmStructureSchema
   > | null>({
     command: "sh",
@@ -87,34 +85,17 @@ export const Workspaces = (props: { display: string }) => {
     },
   });
 
-  // useEffect(() => {
-  //   // Get initial i3 tree state
-  //   sendMessage("command", {
-  //     command: "i3-msg",
-  //     args: ["-t", "get_tree"],
-  //     callback(data) {
-  //       const parsed: z.infer<typeof I3wmStructureSchema> = JSON.parse(data);
-  //       setNodes(parsed);
-  //     },
-  //   });
-
-  //   // Listen for updates
-  //   const { cleanUp } = sendMessage("command", {
-  //     command: "sh",
-  //     args: [
-  //       // this feels stupid
-  //       "-c",
-  //       `i3-msg -t subscribe -m '[ "window" ]' | while read line ; do echo $(i3-msg -t get_tree); done`,
-  //     ],
-  //     listen: true,
-  //     callback(data) {
-  //       const parsed: z.infer<typeof I3wmStructureSchema> = JSON.parse(data);
-  //       setNodes(parsed);
-  //     },
-  //   });
-
-  //   return cleanUp;
-  // }, []);
+  useEffect(() => {
+    // Get initial i3 tree state
+    sendMessage("command", {
+      command: "i3-msg",
+      args: ["-t", "get_tree"],
+      callback(data) {
+        const parsed: z.infer<typeof I3wmStructureSchema> = JSON.parse(data);
+        setNodes(parsed);
+      },
+    });
+  }, []);
 
   return (
     <div>
