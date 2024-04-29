@@ -1,4 +1,5 @@
 import { useListenedValue } from "~/lib/hooks";
+import { BatteryChargingIcon } from "./icons/battery-charging";
 import { BatteryFullIcon } from "./icons/battery-full";
 import { BatteryLowIcon } from "./icons/battery-low";
 import { BatteryMediumIcon } from "./icons/battery-medium";
@@ -25,6 +26,16 @@ export const Battery = ({
     type: "polling",
   });
 
+  const { value: batteryStatus } = useListenedValue<
+    "Unknown" | "Charging" | "Discharging"
+  >({
+    command: "cat",
+    args: [`/sys/class/power_supply/${batteryName}/status`],
+    defaultValue: "Unknown",
+    pollingInterval: interval,
+    type: "polling",
+  });
+
   const batteryIcon =
     batteryLevel < 20 ? (
       <BatteryWarningIcon />
@@ -44,8 +55,16 @@ export const Battery = ({
       : "";
 
   return (
-    <div className={`flex flex-row gap-1 items-center ${batteryColor}`}>
-      <span className="mb-1 -rotate-90">{batteryIcon}</span>
+    <div
+      className={`flex flex-row gap-1 items-center transition-colors duration-1000 ${batteryColor} ${
+        batteryLevel < 20 ? "animate-pulse" : ""
+      }`}
+    >
+      {batteryLevel < 100 && batteryStatus === "Charging" ? (
+        <BatteryChargingIcon />
+      ) : (
+        batteryIcon
+      )}
       {batteryLevel}%
     </div>
   );

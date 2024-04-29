@@ -1,4 +1,4 @@
-export const BatteryWarningIcon = ({ className }: { className?: string }) => (
+export const BatteryChargingIcon = ({ className }: { className?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -11,10 +11,9 @@ export const BatteryWarningIcon = ({ className }: { className?: string }) => (
     stroke-linejoin="round"
     className={className}
   >
-    <path d="M14 7h2a2 2 0 0 1 2 2v6c0 1-1 2-2 2h-2" />
-    <path d="M6 7H4a2 2 0 0 0-2 2v6c0 1 1 2 2 2h2" />
+    <path d="M15 7h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2" />
+    <path d="M6 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h1" />
+    <path d="m11 7-3 5h4l-3 5" />
     {/* <line x1="22" x2="22" y1="11" y2="13" /> */}
-    <line x1="10" x2="10" y1="7" y2="13" />
-    <line x1="10" x2="10" y1="17" y2="17.01" />
   </svg>
 );

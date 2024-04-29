@@ -1,4 +1,4 @@
-export const BatteryLowIcon = ({ className }: { className?: string }) => (
+export const VolumeLowIcon = ({ className }: { className?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
@@ -11,8 +11,7 @@ export const BatteryLowIcon = ({ className }: { className?: string }) => (
     stroke-linejoin="round"
     className={className}
   >
-    <rect width="16" height="10" x="2" y="7" rx="2" ry="2" />
-    {/* <line x1="22" x2="22" y1="11" y2="13" /> */}
-    <line x1="6" x2="6" y1="11" y2="13" />
+    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
   </svg>
 );

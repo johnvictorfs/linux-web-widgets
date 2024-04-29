@@ -4,14 +4,21 @@
 // SPDX-License-Identifier: MIT
 
 use std::{
-    collections::HashMap, io::{BufRead, BufReader}, process::{Command, Stdio}, sync::Mutex, thread
+    collections::HashMap,
+    io::{BufRead, BufReader},
+    process::{Command, Stdio},
+    sync::Mutex,
+    thread,
 };
 
 use gtk::prelude::{GtkWindowExt, WidgetExt};
 
 use once_cell::sync::Lazy;
 use tao::{
-    event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy, EventLoopWindowTarget}, platform::unix::WindowExtUnix, window::{Window, WindowBuilder, WindowId}
+    event::{Event, WindowEvent},
+    event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy, EventLoopWindowTarget},
+    platform::unix::WindowExtUnix,
+    window::{Window, WindowBuilder, WindowId},
 };
 use wry::{http::Request, WebView, WebViewBuilder};
 
@@ -42,7 +49,7 @@ fn exec_listener(
     cmd: &str,
     args: &[&str],
     callback: impl Fn(String) + Send + 'static,
-    listener_id: &str
+    listener_id: &str,
 ) {
     let mut child = Command::new(cmd)
         .args(args)
@@ -151,7 +158,7 @@ fn main() -> wry::Result<()> {
                             let _ = proxy_clone
                                 .send_event(UserEvent::SendWindowMessage(id, json_output));
                         },
-                        &another_message_id
+                        &another_message_id,
                     );
 
                     return;
@@ -169,8 +176,6 @@ fn main() -> wry::Result<()> {
 
                 let json_output = json_output.unwrap();
 
-                println!("Sending command output: {}", json_output);
-
                 webview
                     .evaluate_script(&format!("window.postMessage({})", json_output))
                     .unwrap();
@@ -181,17 +186,6 @@ fn main() -> wry::Result<()> {
                 if window_properties.window_type == "dock" {
                     println!("Setting window type to dock");
                     window.gtk_window().set_type_hint(gdk::WindowTypeHint::Dock);
-                }
-
-                if window_properties.x.is_some() && window_properties.y.is_some() {
-                    println!(
-                        "Moving window to x: {}, y: {}",
-                        window_properties.x.unwrap(),
-                        window_properties.y.unwrap()
-                    );
-                    window
-                        .gtk_window()
-                        .move_(window_properties.x.unwrap(), window_properties.y.unwrap());
                 }
 
                 if window_properties.width > 0 && window_properties.height > 0 {
@@ -216,6 +210,17 @@ fn main() -> wry::Result<()> {
 
                 window.gtk_window().hide();
                 window.gtk_window().show();
+
+                if window_properties.x.is_some() && window_properties.y.is_some() {
+                    println!(
+                        "Moving window to x: {}, y: {}",
+                        window_properties.x.unwrap(),
+                        window_properties.y.unwrap()
+                    );
+                    window
+                        .gtk_window()
+                        .move_(window_properties.x.unwrap(), window_properties.y.unwrap());
+                }
             }
             _ => (),
         }

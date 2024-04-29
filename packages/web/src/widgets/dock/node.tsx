@@ -41,9 +41,13 @@ export const WindowNode = (props: { node: I3Node }) => {
   if (props.node.type === "workspace" && props.node.num) {
     return (
       <div
-        className={`flex items-center justify-center
-      ${isFocusedOrHasFocusedChildren ? "bg-slate-400" : "bg-slate-800"}
-      rounded-lg w-12 h-8 text-gray-100 cursor-pointer`}
+        className={`flex items-center justify-center transition-all
+      ${
+        isFocusedOrHasFocusedChildren
+          ? "bg-slate-600 text-secondary-foreground/70"
+          : "bg-secondary text-secondary-foreground"
+      }
+      rounded-lg w-12 h-8 cursor-pointer`}
         onClick={() => moveToWorkspace(props.node.name)}
       >
         <span className="text-sm text-center">
