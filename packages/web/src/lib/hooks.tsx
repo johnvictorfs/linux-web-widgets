@@ -21,8 +21,7 @@ export function useListenedValue<T = string>({
   const [value, setValue] = useState<T>(defaultValue as T);
 
   const sendCommand = () => {
-    console.log(`sending command ${command} with args ${args}`);
-    const { cleanUp, commandId } = sendMessage("command", {
+    const { cleanUp } = sendMessage("command", {
       command,
       args,
       listen: type === "listener",
@@ -35,8 +34,6 @@ export function useListenedValue<T = string>({
         setValue(data as T);
       },
     });
-
-    console.log(`command ${commandId} (${command})`);
 
     return cleanUp;
   };

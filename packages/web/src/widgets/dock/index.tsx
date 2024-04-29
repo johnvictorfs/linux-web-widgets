@@ -2,6 +2,7 @@ import { widgetBuilder } from "~/lib/widget";
 
 import "~/styles.css";
 import { Battery } from "./battery";
+import { Bluetooth } from "./bluetooth";
 import { Media } from "./media";
 import { Time } from "./time";
 import { Volume } from "./volume";
@@ -23,6 +24,8 @@ const Dock = (props: { display: string }) => {
       <div className="flex w-full items-center justify-end">
         <div className="flex gap-4 bg-secondary rounded-md px-2 py-1">
           <Volume />
+
+          <Bluetooth />
 
           <Battery batteryName="BAT1" interval={10_000} />
         </div>

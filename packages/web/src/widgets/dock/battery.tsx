@@ -19,7 +19,6 @@ export const Battery = ({
     args: [`/sys/class/power_supply/${batteryName}/capacity`],
     defaultValue: 0,
     formatValue(value) {
-      console.log("value", value);
       return parseInt(value, 10);
     },
     pollingInterval: interval,

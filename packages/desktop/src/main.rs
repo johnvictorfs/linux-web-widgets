@@ -25,7 +25,10 @@ use wry::{http::Request, WebView, WebViewBuilder};
 enum UserEvent {
     SetupWindow(WindowId, WindowProperties),
     Command(WindowId, CommandExecution),
-    SendWindowMessage(WindowId, String),
+    /**
+     * WindowId, MessageId, Output
+     */
+    SendWindowMessage(WindowId, String, String),
     KillListener(String),
 }
 
@@ -120,7 +123,20 @@ fn main() -> wry::Result<()> {
             Event::UserEvent(UserEvent::KillListener(message_id)) => {
                 LISTENERS.lock().unwrap().remove(&message_id);
             }
-            Event::UserEvent(UserEvent::SendWindowMessage(id, json_output)) => {
+            Event::UserEvent(UserEvent::SendWindowMessage(id, message_id, output)) => {
+                let output = output
+                    .replace('"', "\\\"")
+                    .replace('\n', "\\n")
+                    .replace('\t', "\\t");
+
+                let json_output = serde_json::to_string(&format!(
+                    r#"{{"message_id": "{}", "output": "{}"}}"#,
+                    message_id,
+                    output.trim_end()
+                ));
+
+                let json_output = json_output.unwrap();
+
                 let webview = &webviews.get(&id).unwrap().1;
                 webview
                     .evaluate_script(&format!("window.postMessage({})", json_output))
@@ -133,11 +149,11 @@ fn main() -> wry::Result<()> {
                     .map(|s| s.as_str())
                     .collect::<Vec<&str>>();
 
+                let proxy_clone = proxy.clone();
+                let message_id = command.message_id.clone();
+
                 if command.listen {
                     // keep listening to command stdout
-                    let message_id = command.message_id.clone();
-                    let proxy_clone = proxy.clone();
-
                     println!("Listening to command: {}", command.command);
 
                     // TODO: also add window id to clean listeners when window refreshes
@@ -148,15 +164,11 @@ fn main() -> wry::Result<()> {
                         command.command.as_str(),
                         &args,
                         move |output| {
-                            let json_output = serde_json::to_string(&format!(
-                                r#"{{"message_id": "{}", "output": "{}"}}"#,
-                                message_id,
-                                output.replace('"', "\\\"").trim_end()
-                            ))
-                            .unwrap();
-
-                            let _ = proxy_clone
-                                .send_event(UserEvent::SendWindowMessage(id, json_output));
+                            let _ = proxy_clone.send_event(UserEvent::SendWindowMessage(
+                                id,
+                                message_id.clone(),
+                                output,
+                            ));
                         },
                         &another_message_id,
                     );
@@ -164,21 +176,13 @@ fn main() -> wry::Result<()> {
                     return;
                 }
 
-                let webview = &webviews.get(&id).unwrap().1;
+                let output = exec(&command.command, &args);
 
-                let output = exec(&command.command, &args).replace('"', "\\\"");
-
-                let json_output = serde_json::to_string(&format!(
-                    r#"{{"message_id": "{}", "output": "{}"}}"#,
-                    command.message_id,
-                    output.trim_end()
+                let _ = proxy_clone.send_event(UserEvent::SendWindowMessage(
+                    id,
+                    command.message_id.clone(),
+                    output,
                 ));
-
-                let json_output = json_output.unwrap();
-
-                webview
-                    .evaluate_script(&format!("window.postMessage({})", json_output))
-                    .unwrap();
             }
             Event::UserEvent(UserEvent::SetupWindow(id, window_properties)) => {
                 let window = &webviews.get(&id).unwrap().0;
