@@ -120,12 +120,16 @@ export const sendMessage = <T extends keyof MessagePayloads>(
 
         if (messagePayload.message_id === message_id) {
           data.callback!(messagePayload.output);
+
+          // if ("listen" in data && !data.listen) {
+          //   cleanUp();
+          // }
         }
       }
     };
 
     cleanUp = () => {
-      console.log("dropping listener");
+      console.log(`dropping ${message_id} (${message})`);
       window.removeEventListener("message", listener);
       window.ipc.postMessage(`kill-listener:${message_id}`);
     };
@@ -133,11 +137,8 @@ export const sendMessage = <T extends keyof MessagePayloads>(
     window.addEventListener("message", listener);
   }
 
-  if ("listen" in data && !data.listen) {
-    cleanUp();
-  }
-
   return {
     cleanUp,
+    commandId: message_id,
   };
 };

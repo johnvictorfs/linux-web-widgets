@@ -1,5 +1,5 @@
 import { useMemo } from "preact/hooks";
-import type { I3Node } from ".";
+import type { I3Node } from "./workspaces";
 
 const hasFocusedNode = (node: I3Node): boolean => {
   if (node.focused) {

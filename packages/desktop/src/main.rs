@@ -4,20 +4,13 @@
 // SPDX-License-Identifier: MIT
 
 use std::{
-    collections::HashMap,
-    fs::File,
-    io::{BufRead, BufReader, Read, Write},
-    process::{Command, Stdio},
-    thread,
+    collections::HashMap, io::{BufRead, BufReader}, process::{Command, Stdio}, sync::Arc, thread
 };
 
 use gtk::prelude::{GtkWindowExt, WidgetExt};
 
 use tao::{
-    event::{Event, WindowEvent},
-    event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy, EventLoopWindowTarget},
-    platform::unix::WindowExtUnix,
-    window::{Window, WindowBuilder, WindowId},
+    event::{Event, WindowEvent}, event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy, EventLoopWindowTarget}, platform::unix::WindowExtUnix, window::{Window, WindowBuilder, WindowId}
 };
 use wry::{http::Request, WebView, WebViewBuilder};
 
@@ -42,61 +35,12 @@ fn exec(cmd: &str, args: &[&str]) -> String {
     String::from_utf8(output.stdout).unwrap()
 }
 
-const ACTIVE_LISTENER_IDS_FILE: &str = "/tmp/active_listener_ids.txt";
-
-fn add_listener_id(id: &str) {
-    let mut file = File::create(ACTIVE_LISTENER_IDS_FILE).unwrap();
-    writeln!(file, "{}", id).unwrap();
-}
-
-fn remove_listener_id(id: &str) {
-    let mut file = File::open(ACTIVE_LISTENER_IDS_FILE).unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents).unwrap();
-
-    let mut new_contents = String::new();
-    for line in contents.lines() {
-        if line != id {
-            new_contents.push_str(line);
-            new_contents.push('\n');
-        }
-    }
-
-    let mut file = File::create(ACTIVE_LISTENER_IDS_FILE).unwrap();
-    write!(file, "{}", new_contents).unwrap();
-}
-
-fn is_listener_active(id: &str) -> bool {
-    let file = File::open(ACTIVE_LISTENER_IDS_FILE);
-    let mut file = match file {
-        Ok(file) => file,
-        Err(_) => File::create(ACTIVE_LISTENER_IDS_FILE).unwrap(),
-    };
-
-    let mut active_listener_ids = String::new();
-    file.read_to_string(&mut active_listener_ids).unwrap();
-
-    let active_listener_ids = active_listener_ids.split('\n').collect::<Vec<&str>>();
-
-    for active_listener_id in active_listener_ids {
-        if active_listener_id == id {
-            return true;
-        }
-    }
-
-    false
-}
-
-fn clear_active_listeners() {
-    let mut file = File::create(ACTIVE_LISTENER_IDS_FILE).unwrap();
-    write!(file, "").unwrap();
-}
-
 fn exec_listener(
     cmd: &str,
     args: &[&str],
     callback: impl Fn(String) + Send + 'static,
-    listener_id: &str
+    listener_id: &str,
+    listeners: Arc<HashMap<String, bool>>,
 ) {
     let mut child = Command::new(cmd)
         .args(args)
@@ -109,14 +53,14 @@ fn exec_listener(
     println!("Listening to command from exec_listener: {}", cmd);
 
     let cloned_id = listener_id.to_string();
+    let cloned_listeners = listeners.clone();
 
     thread::spawn(move || {
         let reader = BufReader::new(stdout);
         for line in reader.lines() {
             let line = line.unwrap();
 
-            // remove listener from listeners
-            if !is_listener_active(&cloned_id) {
+            if cloned_listeners.contains_key(&cloned_id) {
                 println!("Dropping listener for command: {}", &cloned_id);
                 break;
             }
@@ -142,7 +86,9 @@ fn main() -> wry::Result<()> {
     let event_loop = EventLoopBuilder::<UserEvent>::with_user_event().build();
     let proxy = event_loop.create_proxy();
     let mut webviews = HashMap::new();
-    clear_active_listeners();
+
+    let mut listeners: HashMap<String, bool> = HashMap::new();
+    let listeners_shared = Arc::new(listeners.clone());
 
     for (title, url) in WIDGETS {
         let proxy_clone = proxy.clone();
@@ -167,7 +113,7 @@ fn main() -> wry::Result<()> {
                 }
             }
             Event::UserEvent(UserEvent::KillListener(message_id)) => {
-                remove_listener_id(&message_id);
+                listeners.remove(&message_id);
             }
             Event::UserEvent(UserEvent::SendWindowMessage(id, json_output)) => {
                 let webview = &webviews.get(&id).unwrap().1;
@@ -189,9 +135,11 @@ fn main() -> wry::Result<()> {
 
                     println!("Listening to command: {}", command.command);
 
-                    add_listener_id(&message_id);
+                    listeners.insert(message_id.clone(), true);
 
                     let another_message_id = message_id.clone();
+
+                    let listeners_clone = listeners_shared.clone();
 
                     exec_listener(
                         command.command.as_str(),
@@ -207,7 +155,8 @@ fn main() -> wry::Result<()> {
                             let _ = proxy_clone
                                 .send_event(UserEvent::SendWindowMessage(id, json_output));
                         },
-                        &another_message_id
+                        &another_message_id,
+                        listeners_clone
                     );
 
                     return;
@@ -224,6 +173,8 @@ fn main() -> wry::Result<()> {
                 ));
 
                 let json_output = json_output.unwrap();
+
+                println!("Sending command output: {}", json_output);
 
                 webview
                     .evaluate_script(&format!("window.postMessage({})", json_output))
