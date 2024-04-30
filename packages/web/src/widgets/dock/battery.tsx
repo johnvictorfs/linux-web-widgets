@@ -1,4 +1,5 @@
 import { useListenedValue } from "~/lib/hooks";
+import { Applet } from "./applet";
 import { BatteryChargingIcon } from "./icons/battery-charging";
 import { BatteryFullIcon } from "./icons/battery-full";
 import { BatteryLowIcon } from "./icons/battery-low";
@@ -54,8 +55,8 @@ export const Battery = ({
       : "";
 
   return (
-    <div
-      className={`flex flex-row gap-1 items-center transition-colors duration-1000 ${batteryColor} ${
+    <Applet
+      className={`gap-1 ${batteryColor} ${
         batteryLevel < 20 ? "animate-pulse" : ""
       }`}
     >
@@ -65,6 +66,6 @@ export const Battery = ({
         batteryIcon
       )}
       {batteryLevel}%
-    </div>
+    </Applet>
   );
 };

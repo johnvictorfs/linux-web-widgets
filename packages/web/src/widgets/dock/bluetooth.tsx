@@ -1,5 +1,6 @@
 import { useListenedValue } from "~/lib/hooks";
 import { sendMessage } from "~/lib/widget";
+import { Applet } from "./applet";
 import { BluetoothIcon } from "./icons/bluetooth";
 import { BluetoothConnectedIcon } from "./icons/bluetooth-connected";
 import { BluetoothOffIcon } from "./icons/bluetooth-off";
@@ -35,10 +36,19 @@ export const Bluetooth = () => {
   };
 
   return (
-    <div
+    <Applet
       data-status={bluetoothStatus}
-      className="flex gap-2 items-center justify-center text-muted-foreground data-[status=on]:text-sky-500 cursor-pointer"
-      onClick={toggleBluetooth}
+      className="text-muted-foreground data-[status=on]:text-sky-500 cursor-pointer"
+      onClick={(event) => {
+        if (event.button === 1) {
+          sendMessage("command", {
+            command: "blueman-manager",
+            args: [],
+          });
+        } else {
+          toggleBluetooth();
+        }
+      }}
     >
       {bluetoothStatus === "on" ? (
         !!connectedDevices ? (
@@ -49,6 +59,6 @@ export const Bluetooth = () => {
       ) : (
         <BluetoothOffIcon className="w-4 h-4" />
       )}
-    </div>
+    </Applet>
   );
 };

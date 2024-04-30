@@ -4,13 +4,14 @@ import "~/styles.css";
 import { Battery } from "./battery";
 import { Bluetooth } from "./bluetooth";
 import { Media } from "./media";
+import { Microphone } from "./microphone";
 import { Time } from "./time";
 import { Volume } from "./volume";
 import { Workspaces } from "./workspaces";
 
 const Dock = (props: { display: string }) => {
   return (
-    <div className="flex gap-2 px-2 items-center w-full h-[100vh] justify-between bg-background">
+    <div className="flex gap-2 px-4 items-center w-full h-[100vh] justify-between bg-[#1b1b1f]">
       <div className="flex grow-1 w-full gap-2 items-center">
         <Workspaces display={props.display} />
 
@@ -22,8 +23,10 @@ const Dock = (props: { display: string }) => {
       </div>
 
       <div className="flex w-full items-center justify-end">
-        <div className="flex gap-4 bg-secondary rounded-md px-2 py-1">
+        <div className="flex gap-3 bg-secondary rounded-md px-2 py-1">
           <Volume />
+
+          <Microphone />
 
           <Bluetooth />
 
