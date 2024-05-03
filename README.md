@@ -8,7 +8,7 @@ Ever wanted to build your window manager dock using React.js and tailwindcss? No
 
 Built with [`tao`](https://github.com/tauri-apps/tao) and [`wry`](https://github.com/tauri-apps/wry) from [Tauri](https://tauri.app).
 
-![image](https://github.com/johnvictorfs/dotfiles/assets/37747572/af448e31-ed51-4f12-819a-75e93fa7ac67)
+![image](https://github.com/johnvictorfs/linux-web-widgets/assets/37747572/db9d836b-41f3-40e2-b684-95c6ed9eb1f1)
 
 ## Development
 
