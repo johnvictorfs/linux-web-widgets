@@ -32,9 +32,9 @@ enum UserEvent {
     KillListener(String),
 }
 
-const WIDGETS: [(&str, &str); 1] = [
+const WIDGETS: [(&str, &str); 2] = [
     ("Dock", "http://localhost:3000/dock.html"),
-    // ("Thing", "http://localhost:3000/thing.html"),
+    ("SecondDock", "http://localhost:3000/second_dock.html"),
 ];
 
 static LISTENERS: Lazy<Mutex<HashMap<String, bool>>> = Lazy::new(|| Mutex::new(HashMap::new()));
