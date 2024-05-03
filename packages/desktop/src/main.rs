@@ -207,9 +207,6 @@ fn main() -> wry::Result<()> {
                     .unwrap()
                     .set_override_redirect(window_properties.override_redirect);
 
-                window.gtk_window().hide();
-                window.gtk_window().show();
-
                 if window_properties.x.is_some() && window_properties.y.is_some() {
                     println!(
                         "Moving window to x: {}, y: {}",
@@ -220,6 +217,9 @@ fn main() -> wry::Result<()> {
                         .gtk_window()
                         .move_(window_properties.x.unwrap(), window_properties.y.unwrap());
                 }
+
+                window.gtk_window().hide();
+                window.gtk_window().show();
             }
             _ => (),
         }

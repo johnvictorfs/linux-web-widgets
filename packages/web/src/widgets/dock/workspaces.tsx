@@ -3,80 +3,34 @@ import { z } from "zod";
 import { useEffect } from "preact/hooks";
 import { useListenedValue } from "~/lib/hooks";
 import { sendMessage } from "~/lib/widget";
-import "~/styles.css";
-import { WindowNode } from "./node";
+import { WindowNode } from "./workspace";
 
-const RectSchema = z
-  .object({
+const workspaceSchema = z.object({
+  id: z.number(),
+  num: z.number(),
+  name: z.string(),
+  visible: z.boolean(),
+  focused: z.boolean(),
+  rect: z.object({
     x: z.number(),
     y: z.number(),
     width: z.number(),
     height: z.number(),
-  })
-  .nullable();
-
-const WindowPropertiesSchema = z
-  .object({
-    class: z.string(),
-    instance: z.string(),
-    title: z.string(),
-  })
-  .optional()
-  .nullable();
-
-export type I3Node = {
-  id: number;
-  rect?: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null;
-  name: string | null;
-  layout: string | null;
-  nodes?: I3Node[] | null;
-  window_properties?: {
-    class: string;
-    instance: string;
-    title: string;
-  } | null;
-  type: "root" | "output" | "con" | "dockarea" | "workspace";
-  num?: number | null;
-  focused?: boolean | null;
-  urgent?: boolean | null;
-};
-
-const NodeSchema: z.ZodSchema<I3Node> = z.object({
-  id: z.number(),
-  type: z.enum(["root", "output", "con", "dockarea", "workspace"]),
-  rect: RectSchema.optional(),
-  name: z.string().nullable(),
-  layout: z.string().nullable(),
-  nodes: z
-    .array(z.lazy(() => NodeSchema))
-    .optional()
-    .nullable(),
-  window_properties: WindowPropertiesSchema,
-  num: z.number().optional().nullable(),
-  focused: z.boolean().optional().nullable(),
-  urgent: z.boolean().optional().nullable(),
+  }),
+  output: z.string(),
+  urgent: z.boolean(),
 });
 
-const I3wmStructureSchema = z.object({
-  rect: RectSchema,
-  name: z.string(),
-  layout: z.string(),
-  nodes: z.array(NodeSchema),
-});
+export type Workspace = z.infer<typeof workspaceSchema>;
 
 export const Workspaces = (props: { display: string }) => {
-  const { value: nodes, setValue: setNodes } = useListenedValue<z.infer<
-    typeof I3wmStructureSchema
-  > | null>({
+  const { value: workspaces, setValue: setWorkspaces } = useListenedValue<
+    Workspace[] | null
+  >({
     command: "sh",
     args: [
       "-c",
-      `i3-msg -t subscribe -m '[ "window" ]' | while read line ; do echo $(i3-msg -t get_tree); done`,
+      `i3-msg -t subscribe -m '[ "window" ]' | while read line ; do echo $(i3-msg -t get_workspaces); done`,
     ],
     type: "listener",
     defaultValue: null,
@@ -86,28 +40,21 @@ export const Workspaces = (props: { display: string }) => {
   });
 
   useEffect(() => {
-    // Get initial i3 tree state
     sendMessage("command", {
       command: "i3-msg",
-      args: ["-t", "get_tree"],
+      args: ["-t", "get_workspaces"],
       callback(data) {
-        const parsed: z.infer<typeof I3wmStructureSchema> = JSON.parse(data);
-        setNodes(parsed);
+        const parsed: Workspace[] = JSON.parse(data);
+        setWorkspaces(parsed);
       },
     });
   }, []);
 
   return (
-    <div>
-      {nodes?.nodes?.map((node) => {
-        if (node.type === "output" && node.name === props.display) {
-          return (
-            <div key={node.id} className="flex flex-row gap-2">
-              {node.nodes?.map((workspace) => (
-                <WindowNode node={workspace} key={workspace.id} />
-              ))}
-            </div>
-          );
+    <div className="flex flex-row gap-2">
+      {workspaces?.map((workspace) => {
+        if (workspace.output === props.display) {
+          return <WindowNode workspace={workspace} key={workspace.id} />;
         }
 
         return null;
