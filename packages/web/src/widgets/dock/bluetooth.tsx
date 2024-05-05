@@ -12,7 +12,6 @@ export const Bluetooth = () => {
       args: ["show"],
       defaultValue: "off",
       formatValue(value) {
-        console.log("bluetooth", value, value.includes("Powered: yes"));
         return value.includes("Powered: yes") ? "on" : "off";
       },
       pollingInterval: 5000,

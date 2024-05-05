@@ -116,7 +116,6 @@ export const sendMessage = <T extends keyof MessagePayloads>(
     const listener = (event: MessageEvent) => {
       const { data: message } = event;
       if (typeof message === "string") {
-        console.log(message);
         const messagePayload = JSON.parse(message);
 
         if (messagePayload.message_id === message_id) {

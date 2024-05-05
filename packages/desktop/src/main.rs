@@ -37,7 +37,7 @@ const WIDGETS: [(&str, &str); 2] = [
     ("SecondDock", "http://localhost:3000/second_dock.html"),
 ];
 
-static LISTENERS: Lazy<Mutex<HashMap<String, bool>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+static LISTENERS: Lazy<Mutex<HashMap<String, WindowId>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 fn exec(cmd: &str, args: &[&str]) -> String {
     let output = Command::new(cmd)
@@ -112,6 +112,8 @@ fn main() -> wry::Result<()> {
                 window_id,
                 ..
             } => {
+                LISTENERS.lock().unwrap().retain(|_, v: &mut WindowId| *v != window_id);
+
                 webviews.remove(&window_id);
                 if webviews.is_empty() {
                     *control_flow = ControlFlow::Exit
@@ -151,8 +153,7 @@ fn main() -> wry::Result<()> {
 
                 if command.listen {
                     // keep listening to command stdout
-                    // TODO: also add window id to clean listeners when window refreshes
-                    LISTENERS.lock().unwrap().insert(message_id.clone(), true);
+                    LISTENERS.lock().unwrap().insert(message_id.clone(), id);
                     let another_message_id = message_id.clone();
 
                     exec_listener(
@@ -181,6 +182,9 @@ fn main() -> wry::Result<()> {
             }
             Event::UserEvent(UserEvent::SetupWindow(id, window_properties)) => {
                 let window = &webviews.get(&id).unwrap().0;
+
+                // Remove old listeners from this window if it's reloaded
+                LISTENERS.lock().unwrap().retain(|_, v| *v != id);
 
                 if window_properties.window_type == "dock" {
                     println!("Setting window type to dock");
