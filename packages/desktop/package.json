@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "nodemon --exec 'cargo run' -e rs"
+    "dev": "sleep 3 && nodemon --exec 'cargo run' -e rs"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"

@@ -55,8 +55,6 @@ class Widget {
       return;
     }
 
-    render(<this.render />, document.getElementById("root")!);
-
     sendMessage("setup-window", {
       width: this._width,
       height: this._height,
@@ -66,6 +64,8 @@ class Widget {
       y: this._position?.y,
       override_redirect: this._overrideRedirect,
     });
+
+    render(<this.render />, document.getElementById("root")!);
   }
 }
 

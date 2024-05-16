@@ -33,6 +33,9 @@ export const Battery = ({
     args: [`/sys/class/power_supply/${batteryName}/status`],
     defaultValue: "Unknown",
     pollingInterval: interval,
+    formatValue(data) {
+      return data.trim() as "Unknown" | "Charging" | "Discharging";
+    },
     type: "polling",
   });
 
