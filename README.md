@@ -17,6 +17,25 @@ Built with [`tao`](https://github.com/tauri-apps/tao) and [`wry`](https://github
   - [bun](https://bun.sh)
   - [rust](https://www.rust-lang.org/tools/install)
 
+- Tauri dependencies
+
+  - https://v2.tauri.app/start/prerequisites/
+  - TL;DR for Arch
+
+    ```sh
+    sudo pacman -Syu
+    sudo pacman -S --needed \
+      webkit2gtk-4.1 \
+      base-devel \
+      curl \
+      wget \
+      file \
+      openssl \
+      appmenu-gtk-module \
+      libappindicator-gtk3 \
+      librsvg
+    ```
+
 - Install dependencies
 
   - `bun install`
