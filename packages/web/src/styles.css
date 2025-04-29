@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    cursor: default;
     font-family: Fantasque Sans Mono, "Font Awesome 5 Free Solid",
       FiraCode Nerd Font Mono, Inter, Avenir, Helvetica, Arial, sans-serif;
     font-size: 16px;
