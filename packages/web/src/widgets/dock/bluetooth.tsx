@@ -1,3 +1,4 @@
+import { useEffect } from "preact/compat";
 import { useListenedValue } from "~/lib/hooks";
 import { sendMessage } from "~/lib/widget";
 import { Applet } from "./applet";
@@ -34,20 +35,31 @@ export const Bluetooth = () => {
     });
   };
 
+  const handleClick: (event: { button: number }) => void = (event) => {
+    if (event.button === 1) {
+      sendMessage("command", {
+        command: "blueman-manager",
+        args: [],
+      });
+    } else {
+      toggleBluetooth();
+    }
+  };
+
+  useEffect(() => {
+    addEventListener("auxclick", handleClick);
+
+    return () => {
+      removeEventListener("auxclick", handleClick);
+    };
+  }, []);
+
   return (
     <Applet
       data-status={bluetoothStatus}
       className="text-muted-foreground data-[status=on]:text-sky-500 cursor-pointer"
-      onClick={(event) => {
-        if (event.button === 1) {
-          sendMessage("command", {
-            command: "blueman-manager",
-            args: [],
-          });
-        } else {
-          toggleBluetooth();
-        }
-      }}
+      onClick={handleClick}
+      id="bluetooth-applet"
     >
       {bluetoothStatus === "on" ? (
         !!connectedDevices ? (
