@@ -57,6 +57,7 @@ fn exec_listener(
     let mut child = Command::new(cmd)
         .args(args)
         .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .spawn()
         .unwrap();
     let stdout = child.stdout.take().unwrap();
@@ -64,6 +65,7 @@ fn exec_listener(
 
     let cloned_id = listener_id.to_string();
 
+    // Spawn a thread to handle stdout and wait for the child process to exit
     thread::spawn(move || {
         let reader = BufReader::new(stdout);
         for line in reader.lines() {
@@ -75,19 +77,19 @@ fn exec_listener(
 
             callback(line);
         }
+        // Wait for the child process to exit to avoid zombie processes
+        let _ = child.wait();
     });
 
-    if stderr.is_none() {
-        return;
+    if let Some(stderr) = stderr {
+        thread::spawn(move || {
+            let reader = BufReader::new(stderr);
+            for line in reader.lines() {
+                let line = line.unwrap();
+                println!("exec_listener error: {}", line);
+            }
+        });
     }
-
-    thread::spawn(move || {
-        let reader = BufReader::new(stderr.unwrap());
-        for line in reader.lines() {
-            let line = line.unwrap();
-            println!("exec_listener error: {}", line);
-        }
-    });
 }
 
 fn main() -> wry::Result<()> {
@@ -268,11 +270,6 @@ fn create_new_window(
         target_os = "ios",
         target_os = "android"
     )))]
-    let builder = {
-        use wry::WebViewBuilderExtUnix;
-        let vbox = window.default_vbox().unwrap();
-        WebViewBuilder::new_gtk(vbox)
-    };
 
     let gtk_window = window.gtk_window();
 
@@ -306,11 +303,19 @@ fn create_new_window(
         }
     };
 
-    let webview: WebView = builder
+    let webview_builder = WebViewBuilder::new()
+        .with_clipboard(true)
         .with_url(url)
-        .with_ipc_handler(handler)
-        .build()
-        .unwrap();
+        .with_devtools(true)
+        .with_ipc_handler(handler);
+
+    let webview = {
+        use tao::platform::unix::WindowExtUnix;
+        use wry::WebViewBuilderExtUnix;
+        let vbox = window.default_vbox().unwrap();
+        webview_builder.build_gtk(vbox)
+            .unwrap()
+    };
 
     gdk_window.resize(570, 320);
     gtk_window.move_(0, 0);
